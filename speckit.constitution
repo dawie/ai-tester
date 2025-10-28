@@ -1,0 +1,25 @@
+### Speckit Constitution — Core Principles
+
+1. Code Quality
+   - Enforce clear module boundaries and self-documenting names.
+   - Lint and type-check in CI; block merges on errors (ruff/flake8 + mypy/pyright).
+   - Require peer review for all merges; no direct commits to main.
+   - Keep functions small, pure where practical, and documented with docstrings.
+
+2. Testing Standards
+   - Critical paths ≥90% coverage; overall project ≥80%.
+   - Tests are deterministic, parallel-safe, and environment-agnostic.
+   - Use pytest with HTML/JUnit reports; failures block release.
+   - Include unit, integration, and e2e Playwright tests; mock external services.
+
+3. User Experience Consistency
+   - Adhere to a shared design system; no ad‑hoc components.
+   - Accessibility: WCAG 2.1 AA for all new/modified UI.
+   - Maintain consistent copy, navigation, and error states.
+   - UX checks in CI (linting, a11y scans) and in release checklist.
+
+4. Performance Requirements
+   - Set and uphold budgets: P95 latency, memory, bundle size.
+   - Regressions >5% at P95 or budgets exceeded must be fixed before release.
+   - Profile regularly; optimize hot paths and eliminate N+1s.
+   - Add performance tests/monitors; track in CI and production dashboards.
