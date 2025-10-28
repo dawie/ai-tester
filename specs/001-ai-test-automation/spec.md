@@ -12,6 +12,8 @@
 - Q: How should the system handle Gemini API failures (rate limits, timeouts, service errors)? → A: Fail immediately with clear error message and exit (no retry)
 - Q: How should generated tests handle dynamic content and unstable selectors? → A: Prioritize stable selectors (text content, roles, data-testid) with wait strategies, expect some test failures
 - Q: How does the system identify which test files are approved for execution versus still in draft/review status? → A: Use directory structure (tests/draft/ vs tests/approved/) to separate file states
+- Q: How should the system handle target web application errors during page capture? → A: Log error details and fail gracefully
+- Q: How should the system handle authentication between test generation and execution phases? → A: Ignore for now
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -38,7 +40,7 @@ A QA engineer points the system at a web application URL. The system uses Google
 
 **Acceptance Scenarios**:
 
-1. **Given** a target web application URL, **When** the system is invoked with that URL, **Then** the system captures page HTML and screenshots, sends context to Gemini API, and generates Python Playwright test cases saved to `tests/ai_generated_tests.py`
+1. **Given** a target web application URL, **When** the system is invoked with that URL, **Then** the system captures page HTML and screenshots, sends context to Gemini API, and generates Python Playwright test cases saved to `tests/draft/ai_generated_tests.py`
 2. **Given** a multi-page web application, **When** test generation runs, **Then** the system explores multiple pages and generates test cases for each distinct page/flow
 3. **Given** a page with forms, **When** test generation analyzes the page, **Then** generated tests include form field validation, submission, and error handling scenarios
 4. **Given** an authentication-protected application, **When** test generation encounters login, **Then** the system generates authentication setup in test fixtures
@@ -55,7 +57,7 @@ A QA engineer reviews the AI-generated test cases in their editor, makes necessa
 
 **Acceptance Scenarios**:
 
-1. **Given** AI-generated test cases in `tests/ai_generated_tests.py`, **When** a human reviews the file, **Then** the test code is readable, well-commented, and uses standard Playwright patterns
+1. **Given** AI-generated test cases in `tests/draft/ai_generated_tests.py`, **When** a human reviews the file, **Then** the test code is readable, well-commented, and uses standard Playwright patterns
 2. **Given** reviewed test cases, **When** the human saves changes, **Then** the system preserves edits without regenerating/overwriting
 3. **Given** multiple test case files, **When** organizing tests, **Then** the system supports clear naming conventions and directory structure for different test suites
 
@@ -71,15 +73,13 @@ A QA engineer triggers test execution. The system runs all approved Playwright t
 
 **Acceptance Scenarios**:
 
-1. **Given** approved test cases in `tests/` directory, **When** execution is triggered, **Then** all tests run in a Docker container with Playwright browsers installed
+1. **Given** approved test cases in `tests/approved/` directory, **When** execution is triggered, **Then** all tests run in a Docker container with Playwright browsers installed
 2. **Given** test execution completes, **When** viewing results, **Then** a JUnit XML report is generated in `reports/junit.xml` with test outcomes
 3. **Given** a test failure occurs, **When** reviewing failure details, **Then** the system captures HTML snapshots, screenshots, and console logs in `captures/` directory
 4. **Given** multiple test runs, **When** comparing results, **Then** reports include timestamps and unique identifiers for each test run
 
 ### Edge Cases
 
-- What happens when the target web application is unreachable or returns errors?
-- How are authentication cookies/sessions managed between test generation and execution phases?
 - What happens when generated test selectors break due to UI changes between generation and execution?
 
 ## Requirements *(mandatory)*
@@ -95,7 +95,7 @@ A QA engineer triggers test execution. The system runs all approved Playwright t
 - **FR-002**: System MUST accept a target web application URL as input via command-line interface or configuration file
 - **FR-003**: System MUST use Playwright to capture page HTML content and full-page screenshots for analysis
 - **FR-004**: System MUST send captured page context (HTML + screenshot) to Google Gemini Computer Use API for test case generation
-- **FR-005**: System MUST generate Python Playwright test cases using pytest framework and save them to `tests/` directory
+- **FR-005**: System MUST generate Python Playwright test cases using pytest framework and save them to `tests/draft/` directory
 - **FR-006**: System MUST preserve human edits to generated test files and never overwrite approved tests
 - **FR-007**: System MUST execute Playwright tests in headless mode by default within Docker containers
 - **FR-008**: System MUST generate JUnit XML test reports in `reports/` directory for CI/CD integration
@@ -105,6 +105,8 @@ A QA engineer triggers test execution. The system runs all approved Playwright t
 - **FR-012**: System MUST support both headless and headed browser modes for debugging purposes
 - **FR-013**: System MUST fail immediately with descriptive error message when Gemini API is unavailable, rate-limited, or returns errors (no retry attempts)
 - **FR-014**: System MUST generate tests using stable selectors (text content, ARIA roles, data-testid attributes) and wait strategies to handle dynamic content
+- **FR-015**: System MUST only execute test files located in `tests/approved/` directory, ignoring files in `tests/draft/` directory
+- **FR-016**: System MUST log detailed error information and terminate gracefully when target web application is unreachable or returns HTTP errors
 
 ### Key Entities
 
@@ -133,7 +135,7 @@ A QA engineer triggers test execution. The system runs all approved Playwright t
 ## Assumptions
 
 - Google Gemini Computer Use API access is available with sufficient quota for the expected volume of test generation requests
-- Target web applications are publicly accessible or authentication credentials can be provided via environment variables
+- Target web applications are publicly accessible or authentication will be addressed in future iterations
 - Playwright's default selectors (text content, roles, labels) are sufficient for most element identification scenarios
 - Docker Desktop is installed and configured on the user's machine (Windows/macOS/Linux)
 - Users have basic Python and pytest knowledge for reviewing and editing generated test cases

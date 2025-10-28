@@ -1,11 +1,11 @@
 # Dockerfile
-FROM mcr.microsoft.com/playwright/python:v1.48.0-jammy
+FROM mcr.microsoft.com/playwright/python:v1.55.0-jammy
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1
 
-WORKDIR /work
+WORKDIR /app
 
 COPY requirements.txt .
 RUN python -m pip install --upgrade pip && \
@@ -13,4 +13,8 @@ RUN python -m pip install --upgrade pip && \
 
 COPY . .
 
-CMD ["pytest", "-q", "--maxfail=1", "--disable-warnings", "-rA", "--junitxml=reports/junit.xml"]
+# Set Python path to include src directory
+ENV PYTHONPATH=/app/src
+
+# Default entry point for CLI
+ENTRYPOINT ["python", "-m", "src.cli.main"]

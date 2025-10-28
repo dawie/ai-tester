@@ -1,11 +1,11 @@
 services:
-  tests:
+  ai-tester:
     build: .
-    working_dir: /work
+    working_dir: /app
     env_file: .env
     volumes:
-      - ./:/work
-    command: >
-      bash -lc "mkdir -p reports &&
-      pytest -q --maxfail=1 --disable-warnings -rA
-      --junitxml=reports/junit.xml"
+      - ./tests:/app/tests
+      - ./captures:/app/captures
+      - ./reports:/app/reports
+    entrypoint: ["python", "main.py"]
+    command: ["--help"]
