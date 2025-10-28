@@ -1,0 +1,11 @@
+services:
+  tests:
+    build: .
+    working_dir: /work
+    env_file: .env
+    volumes:
+      - ./:/work
+    command: >
+      bash -lc "mkdir -p reports &&
+      pytest -q --maxfail=1 --disable-warnings -rA
+      --junitxml=reports/junit.xml"
